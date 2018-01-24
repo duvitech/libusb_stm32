@@ -16,9 +16,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "stm32.h"
-#include "../usb.h"
+#include "usb.h"
 
-#if defined(USE_STMV0_DRIVER)
+#if defined(USBD_STM32L052)
 
 #ifndef USB_PMASIZE
     #warning PMA memory size is not defined. Use 1k by default
@@ -145,7 +145,11 @@ void enable(bool enable) {
         RCC->APB1ENR  |=  RCC_APB1ENR_USBEN;
         RCC->APB1RSTR |= RCC_APB1RSTR_USBRST;
         RCC->APB1RSTR &= ~RCC_APB1RSTR_USBRST;
-        USB->CNTR = USB_CNTR_CTRM | USB_CNTR_RESETM | USB_CNTR_SOFM | USB_CNTR_ESOFM | USB_CNTR_ERRM | USB_CNTR_SUSPM | USB_CNTR_WKUPM;
+        USB->CNTR = USB_CNTR_CTRM | USB_CNTR_RESETM | USB_CNTR_ERRM |
+#if !defined(USBD_SOF_DISABLED)
+        USB_CNTR_SOFM |
+#endif
+        USB_CNTR_SUSPM | USB_CNTR_WKUPM;
     } else if (RCC->APB1ENR & RCC_APB1ENR_USBEN) {
         USB->BCDR = 0;
         RCC->APB1RSTR |= RCC_APB1RSTR_USBRST;
@@ -158,8 +162,28 @@ void reset (void) {
     USB->CNTR &= ~USB_CNTR_FRES;
 }
 
-void connect(bool connect) {
+uint8_t connect(bool connect) {
+    uint8_t res;
+    USB->BCDR = USB_BCDR_BCDEN | USB_BCDR_DCDEN;
+    if (USB->BCDR & USB_BCDR_DCDET) {
+        USB->BCDR = USB_BCDR_BCDEN | USB_BCDR_PDEN;
+        if (USB->BCDR & USB_BCDR_PS2DET) {
+            res = usbd_lane_unk;
+        } else if (USB->BCDR & USB_BCDR_PDET) {
+            USB->BCDR = USB_BCDR_BCDEN | USB_BCDR_SDEN;
+            if (USB->BCDR & USB_BCDR_SDET) {
+                res = usbd_lane_dcp;
+            } else {
+                res = usbd_lane_cdp;
+            }
+        } else {
+            res = usbd_lane_sdp;
+        }
+    } else {
+        res = usbd_lane_dsc;
+    }
     USB->BCDR = (connect) ? USB_BCDR_DPPU : 0;
+    return res;
 }
 
 void setaddr (uint8_t addr) {
@@ -382,9 +406,11 @@ void evt_poll(usbd_device *dev, usbd_evt_callback callback) {
             ep_deconfig(i);
         }
         _ev = usbd_evt_reset;
+#if !defined(USBD_SOF_DISABLED)
     } else if (_istr & USB_ISTR_SOF) {
         _ev = usbd_evt_sof;
         USB->ISTR &= ~USB_ISTR_SOF;
+#endif
     } else if (_istr & USB_ISTR_WKUP) {
         _ev = usbd_evt_wkup;
         USB->CNTR &= ~USB_CNTR_FSUSP;
@@ -393,9 +419,6 @@ void evt_poll(usbd_device *dev, usbd_evt_callback callback) {
         _ev = usbd_evt_susp;
         USB->CNTR |= USB_CNTR_FSUSP;
         USB->ISTR &= ~USB_ISTR_SUSP;
-    } else if (_istr & USB_ISTR_ESOF) {
-        USB->ISTR &= ~USB_ISTR_ESOF;
-        _ev = usbd_evt_esof;
     } else if (_istr & USB_ISTR_ERR) {
         USB->ISTR &= ~USB_ISTR_ERR;
         _ev = usbd_evt_error;
@@ -431,8 +454,8 @@ uint16_t get_serialno_desc(void *buffer) {
     return 18;
 }
 
-const struct usbd_driver usb_stmv0 = {
-    0,
+const struct usbd_driver usbd_devfs = {
+    USBD_HW_BC,
     enable,
     reset,
     connect,
@@ -448,4 +471,4 @@ const struct usbd_driver usb_stmv0 = {
     get_serialno_desc,
 };
 
-#endif //USE_STM32V0_DRIVER
+#endif //USBD_STM32L052

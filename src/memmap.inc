@@ -61,6 +61,77 @@
     #else
         #define UID_BASE        0x1FF800D0
     #endif
+#elif defined(STM32F102x6) || defined(STM32F102xB) || \
+      defined(STM32F103x6) || defined(STM32F103xB) || \
+      defined(stm32F103xE) || defined(STM32F103xG)
+    #define USB_EPBASE      0x40005C00
+    #define USB_REGBASE     0x40005C40
+    #define USB_CNTR        0x00
+    #define USB_ISTR        0x04
+    #define USB_FNR         0x08
+    #define USB_DADDR       0x0C
+    #define USB_BTABLE      0x10
+    #define USB_PMABASE     0x40006000
+    #define RCC_BASE        0x40021000
+    #define RCC_APB1RSTR    0x10
+    #define RCC_APB2ENR     0x18
+    #define RCC_APB1ENR     0x1C
+    #define RCC_GPIOAEN     0x02
+    #define RCC_GPIOBEN     0x03
+    #define RCC_GPIOCEN     0x04
+    #define RCC_GPIODEN     0x05
+    #define RCC_GPIOEEN     0x06
+    #define RCC_GPIOFEN     0x07
+
+    #define UID_BASE        0x1FFFF7E8
+    #define GPIOA           0x40010800
+    #define GPIOB           0x40010C00
+    #define GPIOC           0x40011000
+    #define GPIOD           0x40011400
+    #define GPIOE           0x40011800
+    #define GPIOF           0x40011C00
+    #define GPIOG           0x40012000
+    #define GPIO_CRL        0x00
+    #define GPIO_CRH        0x04
+    #define GPIO_BSRR       0x10
+
+
+#elif defined(STM32F303x8) || defined(STM32F303xC) || \
+      defined(STM32F303xE)
+
+    #define USB_EPBASE      0x40005C00
+    #define USB_REGBASE     0x40005C40
+    #define USB_CNTR        0x00
+    #define USB_ISTR        0x04
+    #define USB_FNR         0x08
+    #define USB_DADDR       0x0C
+    #define USB_BTABLE      0x10
+    #define USB_PMABASE     0x40006000
+
+    #define RCC_BASE        0x40021000
+    #define RCC_APB1ENR     0x1C
+    #define RCC_APB1RSTR    0x10
+    #define RCC_AHBENR      0x14
+    #define RCC_GPIOAEN     0x11
+    #define RCC_GPIOBEN     0x12
+    #define RCC_GPIOCEN     0x13
+    #define RCC_GPIODEN     0x14
+    #define RCC_GPIOEEN     0x15
+    #define RCC_GPIOFEN     0x16
+    #define RCC_GPIOGEN     0x17
+    #define RCC_GPIOHEN     0x10
+
+    #define UID_BASE        0x1FFFF7AC
+
+    #define GPIOA           0x48000000
+    #define GPIOB           0x48000400
+    #define GPIOC           0x48000800
+    #define GPIOD           0x48000C00
+    #define GPIOE           0x48001000
+    #define GPIOF           0x48001400
+    #define GPIO_MODER      0x00
+    #define GPIO_BSRR       0x18
+
 #else
     #error Unsupported MCU
 #endif

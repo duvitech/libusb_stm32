@@ -5,54 +5,93 @@
 + Completely separated USB hardware driver and usb core
 + Easy to use.
 
+### Requirements ###
+
++ [CMSIS V4](https://github.com/ARM-software/CMSIS) or [CMSIS V5](https://github.com/ARM-software/CMSIS_5).
++ Device peripheral access layer header files for STM32. See [Vendor Template](https://github.com/ARM-software/CMSIS/tree/master/Device/_Template_Vendor) for details.
++ [stm32.h](https://github.com/dmitrystu/stm32h) STM32 universal header
+
 ### Supported hardware ###
 
-| HW driver  | Written on | Endpoints |                     Features | MCU series |
-|------------|------------|-----------|------------------------------|------------|
-| usb_stmv0  | GCC C      | 8         | Internal S/N, Doublebuffered | STM32L0x2 STM32L0x3 STM32L4x2 STM32L4x3 STM32F0x2 STM32F0x8 |
-| usb_stmv0a | GCC ASM    | 8         | Internal S/N, Doublebuffered | STM32L0x2 STM32L0x3 STM32L4x2 STM32L4x3 STM32F0x2 STM32F0x8 |
-| usb_stmv1  | GCC C      | 8         | Internal S/N, Doublebuffered | STM32L1xx  |
-| usb_stmv1a | GCC ASM    | 8         | Internal S/N, Doublebuffered | STM32L1xx  |
-| usb_stmv2  | GCC C      | 6         | Internal S/N, Doublebuffered | STM32L4x5 STM32L4x6 (OTG FS (Device mode)) |
+<table>
+    <tr><th>MCU Series</th><th>Features</th><th>Driver</th><th>File</th></tr>
+    <tr>
+        <td rowspan="2">STM32L0x2 STM32L0x3 STM32L4x2 STM32L4x3 STM32F0x2 STM32F0x8</td>
+        <td nowrap rowspan="2">Doublebuffered<br />8 endpoints<br /> BC1.2</td>
+        <td>usbd_devfs</td>
+        <td>usbd_stm32l052_devfs.c</td>
+    </tr>
+    <tr>
+        <td>usbd_devfs_asm</td>
+        <td>usbd_stm32l052_devfs_asm.S</td>
+    </tr>
+    <tr>
+        <td rowspan="2">STM32L1xx</td>
+        <td nowrap rowspan="2">Doublebuffered<br />8 endpoints</td>
+        <td>usbd_devfs</td>
+        <td>usbd_stm32l100_devfs.c</td>
+    </tr>
+    <tr>
+        <td>usbd_devfs_asm</td>
+        <td>usbd_stm32l100_devfs_asm.S</td>
+    </tr>
+    <tr>
+        <td rowspan="2">STM32F102 STM32F103 STM32F302 STM32F303 STM32F373</td>
+        <td nowrap rowspan="2">Doublebuffered<br />External DP pullup<br />8 endpoints</td>
+        <td>usbd_devfs</td>
+        <td>usbd_stm32f103_devfs.c</td>
+    </tr>
+    <tr>
+        <td>usbd_devfs_asm</td>
+        <td>usbd_stm32f103_devfs_asm.S</td>
+    </tr>
+    <tr>
+        <td>STM32L4x5 STM32L4x6</td>
+        <td nowrap>Doublebuffered<br />6 endpoints<br /> BC1.2<br />VBUS detection</td>
+        <td>usbd_otgfs</td>
+        <td>usbd_stm32l476_otgfs.c</td>
+    </tr>
+
+</table>
 
 1. Single physical endpoint can be used to implement
   + one bi-directional/single-buffer logical endpoint (CONTROL)
-  + one mono-directional/double-buffer logical endpoint (BULK OR ISOCHRONOUS)
-  + two mono-directional/single-buffer logical endpoints (BULK OR INTERRUPT)
+  + one uni-directional/double-buffer logical endpoint (BULK OR ISOCHRONOUS)
+  + two uni-directional/single-buffer logical endpoints (BULK OR INTERRUPT)
 
 2. At this moment BULK IN endpoint can use both buffers, but it is not **real** doublebuffered.
 
-3. Tested with STM32L052, STM31L100
+3. Tested with STM32L052K8, STM32L100RC, STM32L476RG, STM32F103C8, STM32F103CB, STM32F303CC, STM32F303RE
 
 ### Implemented definitions for classes ###
 1. USB HID based on [Device Class Definition for Human Interface Devices (HID) Version 1.11](http://www.usb.org/developers/hidpage/HID1_11.pdf)
 2. USB DFU based on [USB Device Firmware Upgrade Specification, Revision 1.1](http://www.usb.org/developers/docs/devclass_docs/DFU_1.1.pdf)
 3. USB CDC based on [Class definitions for Communication Devices 1.2](http://www.usb.org/developers/docs/devclass_docs/CDC1.2_WMC1.1_012011.zip)
 
-###Using make###
+### Using makefile ###
 + to build library module
 ```
 make module MODULE=path/module.a DEFINES="mcu spcified defines" CFLAGS="cpu cpecified compiler flags"
 ```
 + to build demo
 ```
-make demo MCU=stm32l100xc
-make demo MCU=stm32l052x8
-make demo MCU=stm32l476rg
+make bluepill program
+make stm32l052x8
 ```
-+ to flash demo using st-flash
++ to get a help
 ```
-make program
+make help
 ```
-#Default values:#
 
+### Default values: ###
 | Variable | Default Value                       | Means                         |
 |----------|-------------------------------------|-------------------------------|
-| CMSIS    | ../../cmsis                         | path to CMSIS root folder     |
+| CMSIS    | ../../CMSIS                         | path to CMSIS root folder     |
+| CMSISDEV | $(CMSIS)/Device                     | path to CMSIS device folder   |
+| CMSISCORE| $(CMSIS)/CMSIS/Include $(CMSIS)/CMSIS/Core/Include | path to CMSIS core headers |
 | MCU      | stm32l100xc                         | MCU selection for demo project|
 | CFLAGS   | -mcpu=cortex-m3 -mfloat-abi=soft    | MCU specified compiler flags  |
 | DEFINES  | STM32L1 STM32L100xC                 | MCU specified defines         |
-| INCLUDES | $(CMSIS)/device/ST $(CMSIS)/include | path to ST CMSIS includes     |
 
 ### Useful Resources ###
 1. [USB Implementers Forum official site](http://www.usb.org/home)
